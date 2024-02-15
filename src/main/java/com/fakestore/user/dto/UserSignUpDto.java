@@ -1,6 +1,8 @@
-package com.fakestore.user.models;
+package com.fakestore.user.dto;
 
-import jakarta.persistence.*;
+import com.fakestore.user.models.Address;
+import com.fakestore.user.models.Name;
+import com.fakestore.user.models.Role;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,16 +10,12 @@ import java.util.List;
 
 @Getter
 @Setter
-@Entity
-public class User extends BaseModel{
+public class UserSignUpDto {
     private String email;
     private String hashedPassword;
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Name name;
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Address address;
     private String phone;
-    @ManyToMany
     private List<Role> roleList;
     private boolean isEmailVerified;
 }

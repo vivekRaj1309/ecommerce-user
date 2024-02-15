@@ -1,6 +1,7 @@
 package com.fakestore.user.controlleradvices;
 
 import com.fakestore.user.dto.ExceptionDto;
+import com.fakestore.user.exceptions.EmailPasswordIncorrectException;
 import com.fakestore.user.exceptions.UserNotFoundException;
 import com.fakestore.user.exceptions.UsernamePasswordIncorrectException;
 import org.springframework.http.HttpStatus;
@@ -19,5 +20,10 @@ public class ExceptionHandlers {
     @ExceptionHandler(UsernamePasswordIncorrectException.class)
     public ResponseEntity<ExceptionDto> usernamePasswordIncorrectException(UsernamePasswordIncorrectException usernamePasswordIncorrectException){
         return new ResponseEntity<>(new ExceptionDto(usernamePasswordIncorrectException.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(EmailPasswordIncorrectException.class)
+    public ResponseEntity<ExceptionDto> emailPasswordIncorrectException(EmailPasswordIncorrectException emailPasswordIncorrectException){
+        return new ResponseEntity<>(new ExceptionDto(emailPasswordIncorrectException.getMessage()), HttpStatus.NOT_FOUND);
     }
 }

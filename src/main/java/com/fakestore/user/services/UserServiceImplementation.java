@@ -1,13 +1,22 @@
 package com.fakestore.user.services;
 
-import com.fakestore.user.dto.UserLoginDto;
+import com.fakestore.user.exceptions.EmailPasswordIncorrectException;
 import com.fakestore.user.exceptions.UserNotFoundException;
-import com.fakestore.user.exceptions.UsernamePasswordIncorrectException;
+import com.fakestore.user.models.Address;
+import com.fakestore.user.models.Name;
+import com.fakestore.user.models.Token;
 import com.fakestore.user.models.User;
+import com.fakestore.user.repositories.TokenRepositories;
 import com.fakestore.user.repositories.UserRepositories;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,10 +24,13 @@ import java.util.Optional;
 public class UserServiceImplementation implements UserService {
 
     public UserRepositories userRepositories;
-
+    public TokenRepositories tokenRepositories;
+    public BCryptPasswordEncoder bCryptPasswordEncoder;
     @Autowired
-    public UserServiceImplementation(UserRepositories userRepositories){
+    public UserServiceImplementation(TokenRepositories tokenRepositories, UserRepositories userRepositories, BCryptPasswordEncoder bCryptPasswordEncoder){
         this.userRepositories = userRepositories;
+        this.tokenRepositories = tokenRepositories;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
     @Override
@@ -36,18 +48,10 @@ public class UserServiceImplementation implements UserService {
     }
 
     @Override
-    public User addUser(User user) {
-        return userRepositories.save(user);
-    }
-
-    @Override
     public User updateUser(Long id, User user) throws UserNotFoundException {
         User oldUser = getSingleUser(id);
-        if(user.getUsername() != null){
-            oldUser.setUsername(user.getUsername());
-        }
-        if(user.getPassword() != null){
-            oldUser.setPassword(oldUser.getPassword());
+        if(user.getHashedPassword() != null){
+            oldUser.setHashedPassword(oldUser.getHashedPassword());
         }
         if(user.getName() != null){
             oldUser.setName(user.getName());
@@ -65,13 +69,49 @@ public class UserServiceImplementation implements UserService {
     }
 
     @Override
-    public String loginUser(UserLoginDto userLoginDto) throws UsernamePasswordIncorrectException {
-        Optional<User> userOptional = userRepositories.findByUsernameAndPassword(userLoginDto.getUsername(), userLoginDto.getPassword());
-        if(userOptional.isEmpty()){
-            throw new UsernamePasswordIncorrectException("Username or Password is incorrect");
+    public Token loginUser(String email, String password) throws UserNotFoundException {
+        Optional<User> optionalUser = userRepositories.findByEmail(email);
+        if(optionalUser.isEmpty()){
+            throw new UserNotFoundException("Email not found");
         }
-        return "new token given";
+        User user = optionalUser.get();
+        if(!bCryptPasswordEncoder.matches(password, user.getHashedPassword())){
+            throw new EmailPasswordIncorrectException("Email or Password incorrect");
+        }
+        LocalDate today = LocalDate.now();
+        LocalDate thirtyDaysLater = today.plus(30, ChronoUnit.DAYS);
+
+        // Convert LocalDate to Date
+        Date expiryDate = Date.from(thirtyDaysLater.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+        Token token = new Token();
+        token.setValue(RandomStringUtils.randomAlphanumeric(128));
+        token.setDeleted(false);
+        token.setUser(user);
+        token.setExpiryAt(expiryDate);
+
+        return tokenRepositories.save(token);
     }
 
+    @Override
+    public User signUpUser(Name name, String email, String hashedPassword, String phone, Address address) {
+        User user = new User();
+        user.setName(name);
+        user.setAddress(address);
+        user.setEmail(email);
+        user.setHashedPassword(bCryptPasswordEncoder.encode(hashedPassword));
+        user.setPhone(phone);
+        return userRepositories.save(user);
+    }
 
+    @Override
+    public void logoutUser(String token) throws RuntimeException{
+        Optional<Token> optionalToken = tokenRepositories.findTokenByValueAndDeleted(token, false);
+        if(optionalToken.isEmpty()){
+            throw new RuntimeException("Already Logged Out");
+        }
+        Token retrievedToken = optionalToken.get();
+        retrievedToken.setDeleted(true);
+        tokenRepositories.save(retrievedToken);
+    }
 }
