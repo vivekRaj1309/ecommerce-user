@@ -18,4 +18,5 @@ public interface UserService {
     Token loginUser(String email, String password) throws UserNotFoundException;
     User signUpUser(Name name, String email, String hashedPassword, String phone, Address address);
     void logoutUser(String token);
+    User validateToken(String token);
 }

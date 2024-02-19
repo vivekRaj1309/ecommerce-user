@@ -78,8 +78,14 @@ public class UserServiceImplementation implements UserService {
         if(!bCryptPasswordEncoder.matches(password, user.getHashedPassword())){
             throw new EmailPasswordIncorrectException("Email or Password incorrect");
         }
+        Token token = getToken(user);
+
+        return tokenRepositories.save(token);
+    }
+
+    private static Token getToken(User user) {
         LocalDate today = LocalDate.now();
-        LocalDate thirtyDaysLater = today.plus(30, ChronoUnit.DAYS);
+        LocalDate thirtyDaysLater = today.plusDays(30);
 
         // Convert LocalDate to Date
         Date expiryDate = Date.from(thirtyDaysLater.atStartOfDay(ZoneId.systemDefault()).toInstant());
@@ -89,8 +95,7 @@ public class UserServiceImplementation implements UserService {
         token.setDeleted(false);
         token.setUser(user);
         token.setExpiryAt(expiryDate);
-
-        return tokenRepositories.save(token);
+        return token;
     }
 
     @Override
@@ -113,5 +118,14 @@ public class UserServiceImplementation implements UserService {
         Token retrievedToken = optionalToken.get();
         retrievedToken.setDeleted(true);
         tokenRepositories.save(retrievedToken);
+    }
+
+    @Override
+    public User validateToken(String token) throws RuntimeException {
+        Optional<Token> tokenOptional = tokenRepositories.findByValueAndDeletedEqualsAndExpiryGreaterThan(token, false, new Date());
+        if(tokenOptional.isEmpty()){
+            throw new RuntimeException("Token expired, please login again");
+        }
+        return tokenOptional.get().getUser();
     }
 }
