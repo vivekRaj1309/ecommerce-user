@@ -8,5 +8,5 @@ import java.util.Optional;
 
 public interface TokenRepositories extends JpaRepository<Token, Long> {
     Optional<Token> findTokenByValueAndDeleted(String token, boolean isDeleted);
-    Optional<Token> findByValueAndDeletedEqualsAndExpiryGreaterThan(String token, boolean deleted,Date date);
+    Optional<Token> findByValueAndDeletedEqualsAndExpiryAtGreaterThan(String token, boolean deleted,Date date);
 }

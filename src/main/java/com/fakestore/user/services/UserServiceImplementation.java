@@ -122,7 +122,7 @@ public class UserServiceImplementation implements UserService {
 
     @Override
     public User validateToken(String token) throws RuntimeException {
-        Optional<Token> tokenOptional = tokenRepositories.findByValueAndDeletedEqualsAndExpiryGreaterThan(token, false, new Date());
+        Optional<Token> tokenOptional = tokenRepositories.findByValueAndDeletedEqualsAndExpiryAtGreaterThan(token, false, new Date());
         if(tokenOptional.isEmpty()){
             throw new RuntimeException("Token expired, please login again");
         }
