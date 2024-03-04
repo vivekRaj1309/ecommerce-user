@@ -17,7 +17,7 @@ public class User extends BaseModel{
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Address address;
     private String phone;
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private List<Role> roleList;
     private boolean isEmailVerified;
 }

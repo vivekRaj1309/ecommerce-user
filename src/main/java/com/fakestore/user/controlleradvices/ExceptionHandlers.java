@@ -6,6 +6,7 @@ import com.fakestore.user.exceptions.UserNotFoundException;
 import com.fakestore.user.exceptions.UsernamePasswordIncorrectException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -25,5 +26,20 @@ public class ExceptionHandlers {
     @ExceptionHandler(EmailPasswordIncorrectException.class)
     public ResponseEntity<ExceptionDto> emailPasswordIncorrectException(EmailPasswordIncorrectException emailPasswordIncorrectException){
         return new ResponseEntity<>(new ExceptionDto(emailPasswordIncorrectException.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<ExceptionDto> usernameNotFoundException(UsernameNotFoundException usernameNotFoundException){
+        return new ResponseEntity<>(new ExceptionDto(usernameNotFoundException.getMessage()), HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ExceptionDto> runtimeException(RuntimeException runtimeException){
+        return new ResponseEntity<>(new ExceptionDto(runtimeException.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ExceptionDto> exception(Exception exception){
+        return new ResponseEntity<>(new ExceptionDto(exception.getMessage()), HttpStatus.BAD_REQUEST);
     }
 }
